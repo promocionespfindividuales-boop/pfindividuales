@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Domiciliación · PF Individuales</title>
+<link rel="icon" href="/static/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0C0C2F; --navy-2:#1E303E; --magenta:#C90BB3; --coral:#FA4050;
+    --grad:linear-gradient(90deg,var(--magenta),#E3159A 45%,var(--coral));
+    --bg:#F4F5F9; --card:#fff; --text:#1E303E; --muted:#6B7280; --line:#E3E5EC;
+    --ok:#0E9F6E; --err:#E02D3C; --radius:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Montserrat,system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+  header{background:var(--navy);padding:22px 16px 64px;text-align:center;position:relative}
+  header img{height:62px}
+  header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:var(--grad)}
+  main{max-width:520px;margin:-44px auto 40px;padding:0 16px;position:relative;z-index:1}
+  .card{background:var(--card);border-radius:var(--radius);box-shadow:0 8px 30px rgba(12,12,47,.10);padding:24px 20px;margin-bottom:16px}
+  h1{font-size:1.25rem;margin:0 0 6px}
+  h2{font-size:1rem;margin:0 0 14px;display:flex;align-items:center;gap:10px}
+  h2 .n{width:26px;height:26px;border-radius:50%;background:var(--grad);color:#fff;font-size:.8rem;display:grid;place-items:center;flex:none}
+  p.lead{margin:0;color:var(--muted);font-size:.92rem;line-height:1.5}
+  .resumen{margin-top:14px;padding:12px 14px;border-radius:10px;background:#F8F0FB;font-size:.88rem;line-height:1.5}
+  label{display:block;font-size:.8rem;font-weight:600;margin:14px 0 6px}
+  input,select{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:10px;font:inherit;font-size:1rem;color:var(--text);background:#fff;outline:none;transition:border-color .15s,box-shadow .15s}
+  input:focus,select:focus{border-color:var(--magenta);box-shadow:0 0 0 3px rgba(201,11,179,.12)}
+  input.bad{border-color:var(--err)} input.good{border-color:var(--ok)}
+  .hint{font-size:.76rem;color:var(--muted);margin-top:5px;min-height:1em}
+  .hint.err{color:var(--err)} .hint.ok{color:var(--ok)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .cardnum{position:relative}
+  .marca{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:.72rem;font-weight:700;letter-spacing:.04em;color:var(--navy-2);background:#EEF0F5;padding:3px 8px;border-radius:6px;display:none}
+  .autorizacion{font-size:.82rem;line-height:1.55;color:#374151;background:#F9FAFB;border:1px solid var(--line);border-radius:10px;padding:12px 14px;max-height:180px;overflow:auto}
+  .check{display:flex;gap:10px;align-items:flex-start;margin-top:14px;font-size:.88rem;line-height:1.4;cursor:pointer}
+  .check input{width:20px;height:20px;flex:none;margin-top:1px;accent-color:var(--magenta)}
+  button{width:100%;border:0;border-radius:12px;padding:15px;font:inherit;font-weight:700;font-size:1rem;color:#fff;background:var(--grad);cursor:pointer;box-shadow:0 6px 18px rgba(250,64,80,.28);transition:opacity .15s,transform .05s}
+  button:active{transform:translateY(1px)}
+  button:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
+  .seguro{display:flex;gap:8px;align-items:center;justify-content:center;font-size:.76rem;color:var(--muted);margin-top:12px;text-align:center}
+  .alerta{padding:12px 14px;border-radius:10px;font-size:.88rem;margin-bottom:14px;display:none}
+  .alerta.err{display:block;background:#FDECEE;color:#9B1C26}
+  .estado{text-align:center;padding:36px 22px}
+  .estado .ico{width:64px;height:64px;border-radius:50%;margin:0 auto 16px;display:grid;place-items:center;font-size:30px;color:#fff;background:var(--grad)}
+  .estado.fallo .ico{background:var(--navy-2)}
+  .oculto{display:none!important}
+  .spinner{width:34px;height:34px;border:3px solid #E9E2F0;border-top-color:var(--magenta);border-radius:50%;animation:g 0.8s linear infinite;margin:20px auto}
+  @keyframes g{to{transform:rotate(360deg)}}
+  footer{text-align:center;font-size:.72rem;color:var(--muted);padding:0 16px 30px}
+</style>
+</head>
+<body>
+<header><img src="/static/logo.png" alt="PF · Individuales"></header>
+
+<main>
+  <!-- Cargando -->
+  <div id="vCargando" class="card"><div class="spinner"></div></div>
+
+  <!-- Error de liga -->
+  <div id="vError" class="card estado fallo oculto">
+    <div class="ico">!</div>
+    <h1 id="errTitulo">Liga no disponible</h1>
+    <p class="lead" id="errTexto"></p>
+  </div>
+
+  <!-- Éxito -->
+  <div id="vExito" class="card estado oculto">
+    <div class="ico">✓</div>
+    <h1>¡Listo!</h1>
+    <p class="lead">Tus datos de domiciliación se registraron correctamente. Ya puedes cerrar esta ventana.</p>
+  </div>
+
+  <!-- Formulario -->
+  <form id="vForm" class="oculto" novalidate autocomplete="on">
+    <div class="card">
+      <h1 id="saludo">Hola</h1>
+      <p class="lead">Para domiciliar los pagos de tu crédito, registra tu cuenta CLABE y tu tarjeta de débito. Solo te tomará un par de minutos.</p>
+      <div class="resumen" id="resumen"></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="n">1</span>Cuenta bancaria</h2>
+      <label for="titular">Nombre del titular</label>
+      <input id="titular" autocomplete="name" placeholder="Como aparece en tu cuenta" required>
+
+      <label for="clabe">CLABE interbancaria (18 dígitos)</label>
+      <input id="clabe" inputmode="numeric" maxlength="22" placeholder="000 000 0000000000 0" required>
+      <div class="hint" id="clabeHint">La encuentras en tu app bancaria o estado de cuenta.</div>
+
+      <label for="banco">Banco</label>
+      <select id="banco" required><option value="">Selecciona tu banco</option></select>
+      <input id="bancoOtro" class="oculto" placeholder="Escribe el nombre de tu banco" style="margin-top:8px">
+    </div>
+
+    <div class="card">
+      <h2><span class="n">2</span>Tarjeta de débito</h2>
+      <label for="tnum">Número de tarjeta</label>
+      <div class="cardnum">
+        <input id="tnum" inputmode="numeric" autocomplete="cc-number" maxlength="23" placeholder="0000 0000 0000 0000">
+        <span class="marca" id="marca"></span>
+      </div>
+      <div class="hint" id="tnumHint"></div>
+
+      <label for="tnombre">Nombre en la tarjeta</label>
+      <input id="tnombre" autocomplete="cc-name" placeholder="Como aparece en el plástico">
+
+      <div class="row">
+        <div>
+          <label for="texp">Vencimiento</label>
+          <input id="texp" inputmode="numeric" autocomplete="cc-exp" maxlength="5" placeholder="MM/AA">
+        </div>
+        <div>
+          <label for="tcvv">CVV</label>
+          <input id="tcvv" inputmode="numeric" autocomplete="cc-csc" maxlength="4" placeholder="•••" type="password">
+        </div>
+      </div>
+      <div class="hint" id="texpHint"></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="n">3</span>Autorización</h2>
+      <div class="autorizacion" id="autorizacion"></div>
+      <label class="check"><input type="checkbox" id="acepto"> <span>He leído y acepto la autorización de cargos recurrentes (domiciliación).</span></label>
+    </div>
+
+    <div class="alerta" id="alerta"></div>
+    <button type="submit" id="btn">Registrar domiciliación</button>
+    <div class="seguro">🔒 Conexión cifrada. Los datos de tu tarjeta se envían directamente al procesador de pagos; no los almacenamos.</div>
+  </form>
+</main>
+<footer id="pie"></footer>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const token = location.pathname.split("/").filter(Boolean).pop();
+  const BANCOS = {};
+  let liga = null, proc = {tipo:"demo"}, deviceSessionId = null;
+
+  const mostrar = v => ["vCargando","vError","vExito","vForm"].forEach(x => $(x).classList.toggle("oculto", x !== v));
+  const soloDig = s => s.replace(/\D/g, "");
+  const fmtMXN = n => n.toLocaleString("es-MX",{style:"currency",currency:"MXN"});
+
+  // ── CLABE ──
+  const PESOS = [3,7,1];
+  function clabeValida(c){
+    if (!/^\d{18}$/.test(c)) return false;
+    let s = 0; for (let i=0;i<17;i++) s += (+c[i] * PESOS[i%3]) % 10;
+    return (10 - s % 10) % 10 === +c[17];
+  }
+  $("clabe").addEventListener("input", e => {
+    const d = soloDig(e.target.value).slice(0,18);
+    e.target.value = d.replace(/^(\d{3})(\d{0,3})(\d{0,11})(\d{0,1}).*/, (m,a,b,c,x)=>[a,b,c,x].filter(Boolean).join(" "));
+    const h = $("clabeHint");
+    e.target.classList.remove("bad","good"); h.className = "hint";
+    if (d.length === 18) {
+      if (clabeValida(d)) {
+        e.target.classList.add("good");
+        const b = BANCOS[d.slice(0,3)];
+        h.textContent = b ? `CLABE válida · ${b}` : "CLABE válida"; h.classList.add("ok");
+        if (b) { $("banco").value = d.slice(0,3); $("bancoOtro").classList.add("oculto"); }
+      } else { e.target.classList.add("bad"); h.textContent = "La CLABE no es válida, revisa los dígitos."; h.classList.add("err"); }
+    } else if (d.length) { h.textContent = `${d.length}/18 dígitos`; }
+  });
+  $("banco").addEventListener("change", e => $("bancoOtro").classList.toggle("oculto", e.target.value !== "otro"));
+
+  // ── Tarjeta ──
+  function marcaDe(n){
+    if (/^4/.test(n)) return "visa";
+    if (/^(5[1-5]|2(2[2-9]|[3-6]\d|7[01]|720))/.test(n)) return "mastercard";
+    if (/^3[47]/.test(n)) return "amex";
+    return null;
+  }
+  function luhn(n){
+    let s=0, alt=false;
+    for (let i=n.length-1;i>=0;i--){ let d=+n[i]; if(alt){d*=2;if(d>9)d-=9;} s+=d; alt=!alt; }
+    return s % 10 === 0;
+  }
+  $("tnum").addEventListener("input", e => {
+    const d = soloDig(e.target.value).slice(0,19);
+    e.target.value = d.replace(/(\d{4})(?=\d)/g, "$1 ");
+    const m = marcaDe(d), tag = $("marca");
+    tag.style.display = m ? "block" : "none"; tag.textContent = (m||"").toUpperCase();
+    const h = $("tnumHint"); e.target.classList.remove("bad","good"); h.className="hint"; h.textContent="";
+    if (d.length >= 15) {
+      if (luhn(d)) e.target.classList.add("good");
+      else { e.target.classList.add("bad"); h.textContent = "Número de tarjeta inválido."; h.classList.add("err"); }
+    }
+  });
+  $("texp").addEventListener("input", e => {
+    const d = soloDig(e.target.value).slice(0,4);
+    e.target.value = d.length > 2 ? d.slice(0,2) + "/" + d.slice(2) : d;
+  });
+  $("tcvv").addEventListener("input", e => e.target.value = soloDig(e.target.value).slice(0,4));
+
+  function expValida(v){
+    const m = /^(\d{2})\/(\d{2})$/.exec(v); if (!m) return null;
+    const mes = +m[1], anio = 2000 + +m[2]; if (mes<1||mes>12) return null;
+    const hoy = new Date(); if (anio < hoy.getFullYear() || (anio === hoy.getFullYear() && mes < hoy.getMonth()+1)) return null;
+    return {mes: m[1], anio2: m[2], anio4: String(anio)};
+  }
+
+  // ── Procesador ──
+  const cargarScript = src => new Promise((ok, mal) => { const s=document.createElement("script"); s.src=src; s.onload=ok; s.onerror=()=>mal(new Error("No se pudo cargar el procesador de pagos")); document.head.appendChild(s); });
+
+  async function iniciarProcesador(){
+    if (proc.tipo === "openpay") {
+      await cargarScript("https://js.openpay.mx/openpay.v1.min.js");
+      await cargarScript("https://js.openpay.mx/openpay-data.v1.min.js");
+      OpenPay.setId(proc.merchant_id); OpenPay.setApiKey(proc.public_key); OpenPay.setSandboxMode(!!proc.sandbox);
+      deviceSessionId = OpenPay.deviceData.setup("vForm", "deviceIdHiddenFieldName");
+    } else if (proc.tipo === "conekta") {
+      await cargarScript("https://cdn.conekta.io/js/latest/conekta.js");
+      Conekta.setPublicKey(proc.public_key);
+    }
+  }
+
+  function tokenizar(t){
+    if (proc.tipo === "openpay") return new Promise((ok, mal) =>
+      OpenPay.token.create({card_number:t.num, holder_name:t.nombre, expiration_year:t.exp.anio2, expiration_month:t.exp.mes, cvv2:t.cvv},
+        r => ok({token:r.data.id, marca:r.data.card.brand}),
+        e => mal(new Error((e.data && e.data.description) || "La tarjeta fue rechazada por el procesador"))));
+    if (proc.tipo === "conekta") return new Promise((ok, mal) =>
+      Conekta.Token.create({card:{number:t.num, name:t.nombre, exp_year:t.exp.anio4, exp_month:t.exp.mes, cvc:t.cvv}},
+        r => ok({token:r.id, marca:marcaDe(t.num)}),
+        e => mal(new Error(e.message_to_purchaser || "La tarjeta fue rechazada por el procesador"))));
+    // demo: no se envía la tarjeta a ningún lado
+    const rnd = crypto.getRandomValues(new Uint8Array(12));
+    return Promise.resolve({token:"demo_" + Array.from(rnd, b=>b.toString(16).padStart(2,"0")).join(""), marca:marcaDe(t.num)});
+  }
+
+  // ── Envío ──
+  function alerta(msg){ const a=$("alerta"); a.textContent=msg; a.className = msg ? "alerta err" : "alerta"; if(msg) a.scrollIntoView({behavior:"smooth",block:"center"}); }
+
+  $("vForm").addEventListener("submit", async e => {
+    e.preventDefault(); alerta("");
+    const titular = $("titular").value.trim();
+    const clabe = soloDig($("clabe").value);
+    const bsel = $("banco").value;
+    const banco = bsel === "otro" ? $("bancoOtro").value.trim() : (BANCOS[bsel] || "");
+    const num = soloDig($("tnum").value);
+    const tnombre = $("tnombre").value.trim();
+    const exp = expValida($("texp").value);
+    const cvv = $("tcvv").value;
+
+    if (titular.length < 3) return alerta("Escribe el nombre del titular de la cuenta.");
+    if (!clabeValida(clabe)) return alerta("La CLABE no es válida.");
+    if (!banco) return alerta("Selecciona tu banco.");
+    if (num.length < 15 || !luhn(num)) return alerta("El número de tarjeta no es válido.");
+    if (tnombre.length < 3) return alerta("Escribe el nombre como aparece en la tarjeta.");
+    if (!exp) return alerta("La fecha de vencimiento no es válida (MM/AA).");
+    if (!/^\d{3,4}$/.test(cvv)) return alerta("El CVV no es válido.");
+    if (!$("acepto").checked) return alerta("Debes aceptar la autorización de domiciliación.");
+
+    const btn = $("btn"); btn.disabled = true; btn.textContent = "Procesando…";
+    try {
+      const t = await tokenizar({num, nombre:tnombre, exp, cvv});
+      const r = await fetch(`/api/ligas/${encodeURIComponent(token)}`, {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ titular, clabe, banco, tarjeta_token:t.token, tarjeta_ultimos4:num.slice(-4),
+                               tarjeta_marca:t.marca, device_session_id:deviceSessionId, acepto_terminos:true })
+      });
+      const j = await r.json().catch(()=>({}));
+      if (!r.ok) {
+        const msg = Array.isArray(j.detail) ? j.detail.map(d=>d.msg.replace(/^Value error, /,"")).join(" ") : (j.detail || "No se pudo registrar. Intenta de nuevo.");
+        throw new Error(msg);
+      }
+      ["tnum","tcvv","texp"].forEach(id => $(id).value = "");
+      mostrar("vExito"); window.scrollTo(0,0);
+    } catch (err) {
+      alerta(err.message);
+    } finally {
+      btn.disabled = false; btn.textContent = "Registrar domiciliación";
+    }
+  });
+
+  // ── Inicio ──
+  async function init(){
+    try {
+      const [rb, rl] = await Promise.all([fetch("/api/bancos"), fetch(`/api/ligas/${encodeURIComponent(token)}`)]);
+      (await rb.json()).forEach(b => { BANCOS[b.clave] = b.nombre; $("banco").add(new Option(b.nombre, b.clave)); });
+      $("banco").add(new Option("Otro banco", "otro"));
+      if (!rl.ok) {
+        const j = await rl.json().catch(()=>({}));
+        $("errTitulo").textContent = rl.status === 409 ? "Esta liga ya fue utilizada" : "Liga no disponible";
+        $("errTexto").textContent = rl.status === 409 ? "Tus datos ya fueron registrados. Si necesitas corregirlos, contacta a tu asesor." : (j.detail || "Solicita una nueva liga a tu asesor.");
+        return mostrar("vError");
+      }
+      liga = await rl.json(); proc = liga.procesador;
+      const nom = liga.nombre.split(" ")[0];
+      $("saludo").textContent = `Hola, ${nom.charAt(0).toUpperCase() + nom.slice(1).toLowerCase()}`;
+      $("titular").value = liga.nombre;
+      const partes = [];
+      if (liga.empresa) partes.push(`<b>Empresa:</b> ${esc(liga.empresa)}`);
+      if (liga.monto_descuento) partes.push(`<b>Monto por pago:</b> ${fmtMXN(liga.monto_descuento)}`);
+      if (liga.periodicidad) partes.push(`<b>Periodicidad:</b> ${esc(liga.periodicidad)}`);
+      partes.push(`<b>Liga vigente hasta:</b> ${new Date(liga.expira_en).toLocaleDateString("es-MX",{day:"numeric",month:"long",year:"numeric"})}`);
+      $("resumen").innerHTML = partes.join("<br>");
+      $("autorizacion").textContent = liga.texto_autorizacion;
+      $("pie").textContent = `© ${new Date().getFullYear()} ${liga.financiera}`;
+      await iniciarProcesador();
+      mostrar("vForm");
+    } catch (err) {
+      $("errTexto").textContent = err.message || "Ocurrió un error. Intenta más tarde.";
+      mostrar("vError");
+    }
+  }
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  init();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+fastapi>=0.115
+uvicorn[standard]>=0.30
+cryptography>=42
+# pruebas
+pytest>=8
+httpx>=0.27

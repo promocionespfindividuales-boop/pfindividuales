@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Panel de domiciliación · PF Individuales</title>
+<link rel="icon" href="/static/logo.png">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--navy:#0C0C2F;--navy-2:#1E303E;--magenta:#C90BB3;--coral:#FA4050;
+    --grad:linear-gradient(90deg,var(--magenta),#E3159A 45%,var(--coral));
+    --bg:#F4F5F9;--line:#E3E5EC;--muted:#6B7280;--text:#1E303E}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Montserrat,system-ui,sans-serif;background:var(--bg);color:var(--text)}
+  header{background:var(--navy);color:#fff;padding:14px 20px;display:flex;align-items:center;gap:14px;position:relative}
+  header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--grad)}
+  header img{height:38px} header h1{font-size:1rem;margin:0;font-weight:600;flex:1}
+  header button{width:auto;padding:8px 14px;font-size:.8rem;background:transparent;border:1px solid rgba(255,255,255,.3);box-shadow:none}
+  main{max-width:1200px;margin:24px auto;padding:0 16px;display:grid;grid-template-columns:340px 1fr;gap:20px}
+  @media (max-width:900px){main{grid-template-columns:1fr}}
+  .card{background:#fff;border-radius:14px;box-shadow:0 6px 24px rgba(12,12,47,.07);padding:20px}
+  h2{font-size:.95rem;margin:0 0 14px}
+  label{display:block;font-size:.75rem;font-weight:600;margin:12px 0 5px}
+  input,select{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:9px;font:inherit;font-size:.9rem;outline:none}
+  input:focus,select:focus{border-color:var(--magenta)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  button{border:0;border-radius:10px;padding:11px 16px;font:inherit;font-weight:700;font-size:.88rem;color:#fff;background:var(--grad);cursor:pointer;width:100%;margin-top:16px}
+  button.sec{background:#EEF0F5;color:var(--navy-2);width:auto;margin:0;padding:7px 11px;font-size:.75rem;font-weight:600}
+  button:disabled{opacity:.5}
+  .resultado{margin-top:14px;padding:12px;border-radius:10px;background:#F8F0FB;font-size:.8rem;word-break:break-all;display:none}
+  .resultado .acc{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .toolbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+  .toolbar h2{margin:0;flex:1}
+  .toolbar select{width:auto}
+  .stats{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+  .stat{flex:1;min-width:110px;background:#F9FAFB;border-radius:10px;padding:10px 12px}
+  .stat b{display:block;font-size:1.3rem} .stat span{font-size:.72rem;color:var(--muted)}
+  .tabla{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:.8rem}
+  th{text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding:8px;border-bottom:1px solid var(--line)}
+  td{padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+  td .acc{display:flex;gap:6px;flex-wrap:wrap}
+  .badge{padding:3px 9px;border-radius:999px;font-size:.7rem;font-weight:700;white-space:nowrap}
+  .b-pendiente{background:#FFF4DE;color:#9A6200}.b-completada{background:#DEF7EC;color:#03543F}
+  .b-expirada{background:#EEF0F5;color:#4B5563}.b-revocada{background:#FDECEE;color:#9B1C26}
+  .login{max-width:380px;margin:80px auto}
+  .oculto{display:none!important}
+  .modal{position:fixed;inset:0;background:rgba(12,12,47,.5);display:grid;place-items:center;padding:16px;z-index:9}
+  .modal .card{max-width:520px;width:100%;max-height:90vh;overflow:auto}
+  dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:.82rem;margin:0}
+  dt{color:var(--muted)} dd{margin:0;word-break:break-all}
+  .auth{font-size:.75rem;color:#374151;background:#F9FAFB;padding:10px;border-radius:8px;margin-top:12px;line-height:1.5}
+  .err{color:#B91C1C;font-size:.8rem;margin-top:10px}
+</style>
+</head>
+<body>
+<header><img src="/static/logo.png" alt="PF"><h1>Panel de domiciliación</h1><button id="salir" class="oculto">Cerrar sesión</button></header>
+
+<div id="vLogin" class="login card">
+  <h2>Acceso</h2>
+  <label for="key">API key</label>
+  <input id="key" type="password" autocomplete="current-password">
+  <button id="entrar">Entrar</button>
+  <div class="err" id="loginErr"></div>
+</div>
+
+<main id="vPanel" class="oculto">
+  <section class="card">
+    <h2>Generar liga</h2>
+    <form id="fLiga">
+      <label>Nombre completo del trabajador *</label><input name="nombre" required minlength="3">
+      <div class="row">
+        <div><label>No. empleado</label><input name="num_empleado"></div>
+        <div><label>Teléfono (WhatsApp)</label><input name="telefono" inputmode="tel" placeholder="10 dígitos"></div>
+      </div>
+      <label>Empresa</label><input name="empresa">
+      <label>Correo</label><input name="correo" type="email">
+      <div class="row">
+        <div><label>Monto por pago</label><input name="monto_descuento" type="number" step="0.01" min="0"></div>
+        <div><label>Periodicidad</label>
+          <select name="periodicidad"><option value="">—</option><option>semanal</option><option>catorcenal</option><option>quincenal</option><option>mensual</option></select></div>
+      </div>
+      <label>Vigencia de la liga (días)</label><input name="dias_vigencia" type="number" value="7" min="1" max="60">
+      <button type="submit">Generar liga</button>
+      <div class="err" id="ligaErr"></div>
+    </form>
+    <div class="resultado" id="resultado">
+      <b>Liga generada:</b><br><span id="resUrl"></span>
+      <div class="acc"><button class="sec" id="copiar">Copiar</button><a id="wa" target="_blank" rel="noopener"><button class="sec" type="button">Enviar por WhatsApp</button></a></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="toolbar">
+      <h2>Ligas</h2>
+      <select id="filtro"><option value="">Todas</option><option>pendiente</option><option>completada</option><option>expirada</option><option>revocada</option></select>
+      <button class="sec" id="recargar">Actualizar</button>
+      <button class="sec" id="exportar">Exportar CSV</button>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div class="tabla"><table><thead><tr><th>Trabajador</th><th>Empresa</th><th>Estado</th><th>Banco / CLABE</th><th>Tarjeta</th><th>Fecha</th><th></th></tr></thead><tbody id="tbody"></tbody></table></div>
+  </section>
+</main>
+
+<div class="modal oculto" id="modal"><div class="card"><div id="modalBody"></div><button class="sec" id="cerrarModal" style="margin-top:16px">Cerrar</button></div></div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  let KEY = "";
+  try { KEY = sessionStorage.getItem("pfkey") || ""; } catch {}
+  const esc = s => s == null ? "" : String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const fecha = s => s ? new Date(s).toLocaleString("es-MX",{dateStyle:"short",timeStyle:"short"}) : "";
+
+  async function api(path, opts={}){
+    const r = await fetch(path, {...opts, headers:{"X-API-Key":KEY, "Content-Type":"application/json", ...(opts.headers||{})}});
+    if (r.status === 401) { salir(); throw new Error("Sesión inválida"); }
+    if (!r.ok) { const j = await r.json().catch(()=>({})); throw new Error(Array.isArray(j.detail) ? j.detail.map(d=>`${d.loc.slice(-1)}: ${d.msg}`).join("; ") : (j.detail || r.statusText)); }
+    return r;
+  }
+
+  function salir(){ KEY=""; try{sessionStorage.removeItem("pfkey")}catch{} $("vLogin").classList.remove("oculto"); $("vPanel").classList.add("oculto"); $("salir").classList.add("oculto"); }
+  async function entrar(){
+    KEY = $("key").value.trim() || KEY;
+    try { await api("/api/admin/ligas?estado=__none__"); }
+    catch(e){ $("loginErr").textContent = "API key incorrecta"; return; }
+    try{sessionStorage.setItem("pfkey",KEY)}catch{}
+    $("vLogin").classList.add("oculto"); $("vPanel").classList.remove("oculto"); $("salir").classList.remove("oculto");
+    cargar();
+  }
+  $("entrar").onclick = entrar; $("key").onkeydown = e => e.key==="Enter" && entrar(); $("salir").onclick = salir;
+
+  async function cargar(){
+    const f = $("filtro").value;
+    const datos = await (await api("/api/admin/ligas")).json();
+    const cnt = {pendiente:0, completada:0, expirada:0, revocada:0}; datos.forEach(d => cnt[d.estado]++);
+    $("stats").innerHTML = Object.entries(cnt).map(([k,v]) => `<div class="stat"><b>${v}</b><span>${k}s</span></div>`).join("");
+    $("tbody").innerHTML = datos.filter(d => !f || d.estado === f).map(d => `
+      <tr>
+        <td><b>${esc(d.nombre)}</b><br><span style="color:var(--muted)">${esc(d.num_empleado||"")}</span></td>
+        <td>${esc(d.empresa||"")}</td>
+        <td><span class="badge b-${d.estado}">${d.estado}</span></td>
+        <td>${d.banco ? `${esc(d.banco)}<br>•••• ${esc(d.clabe_ultimos4)}` : ""}</td>
+        <td>${esc(d.tarjeta||"")}</td>
+        <td>${fecha(d.registrada_en || d.creada_en)}</td>
+        <td><div class="acc">
+          ${d.estado==="completada" ? `<button class="sec" data-ver="${d.id}">Ver</button>` : ""}
+          ${d.url ? `<button class="sec" data-copiar="${esc(d.url)}">Copiar liga</button><button class="sec" data-revocar="${d.id}">Revocar</button>` : ""}
+        </div></td>
+      </tr>`).join("") || `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:30px">Sin registros</td></tr>`;
+  }
+  $("recargar").onclick = cargar; $("filtro").onchange = cargar;
+
+  $("tbody").onclick = async e => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.copiar) { await navigator.clipboard.writeText(b.dataset.copiar); b.textContent = "¡Copiada!"; setTimeout(()=>b.textContent="Copiar liga",1500); }
+    if (b.dataset.revocar && confirmar(b)) { await api(`/api/admin/ligas/${b.dataset.revocar}/revocar`,{method:"POST"}); cargar(); }
+    if (b.dataset.ver) verDetalle(b.dataset.ver);
+  };
+  // Confirmación sin diálogos nativos del navegador: segundo clic confirma
+  let pendienteConf = null;
+  function confirmar(b){ const ahora = Date.now(); if (pendienteConf && ahora - pendienteConf < 3000) { pendienteConf = null; return true; } pendienteConf = ahora; b.textContent = "¿Seguro? Clic otra vez"; return false; }
+
+  async function verDetalle(id){
+    const d = await (await api(`/api/admin/ligas/${id}`)).json(), m = d.domiciliacion;
+    $("modalBody").innerHTML = `<h2>${esc(d.nombre)}</h2><dl>
+      <dt>Titular</dt><dd>${esc(m.titular)}</dd>
+      <dt>Banco</dt><dd>${esc(m.banco)}</dd>
+      <dt>CLABE</dt><dd><b>${esc(m.clabe)}</b></dd>
+      <dt>Tarjeta</dt><dd>${esc((m.tarjeta_marca||"").toUpperCase())} •••• ${esc(m.tarjeta_ultimos4)}</dd>
+      <dt>Procesador</dt><dd>${esc(m.procesador)}</dd>
+      <dt>Token</dt><dd>${esc(m.tarjeta_token)}</dd>
+      <dt>Registrado</dt><dd>${fecha(m.registrada_en)}</dd>
+      <dt>IP</dt><dd>${esc(m.ip)}</dd>
+      <dt>Dispositivo</dt><dd style="font-size:.7rem">${esc(m.user_agent)}</dd></dl>
+      <div class="auth"><b>Autorización aceptada:</b><br>${esc(m.texto_autorizacion)}</div>`;
+    $("modal").classList.remove("oculto");
+  }
+  $("cerrarModal").onclick = () => $("modal").classList.add("oculto");
+
+  $("fLiga").onsubmit = async e => {
+    e.preventDefault(); $("ligaErr").textContent = "";
+    const fd = Object.fromEntries(new FormData(e.target)); const body = {};
+    for (const [k,v] of Object.entries(fd)) if (v !== "") body[k] = ["monto_descuento","dias_vigencia"].includes(k) ? Number(v) : v;
+    try {
+      const r = await (await api("/api/admin/ligas",{method:"POST", body:JSON.stringify(body)})).json();
+      $("resUrl").textContent = r.url; $("resultado").style.display = "block";
+      const tel = (body.telefono||"").replace(/\D/g,"").slice(-10);
+      const msg = `Hola ${body.nombre.split(" ")[0]}, te compartimos tu liga segura de PF Individuales para domiciliar los pagos de tu crédito: ${r.url}`;
+      $("wa").href = `https://wa.me/${tel ? "52"+tel : ""}?text=${encodeURIComponent(msg)}`;
+      e.target.reset(); cargar();
+    } catch(err){ $("ligaErr").textContent = err.message; }
+  };
+  $("copiar").onclick = async () => { await navigator.clipboard.writeText($("resUrl").textContent); $("copiar").textContent="¡Copiada!"; setTimeout(()=>$("copiar").textContent="Copiar",1500); };
+
+  $("exportar").onclick = async () => {
+    const blob = await (await api("/api/admin/export.csv")).blob();
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+    a.download = `domiciliaciones_${new Date().toISOString().slice(0,10)}.csv`; a.click(); URL.revokeObjectURL(a.href);
+  };
+
+  if (KEY) entrar();
+})();
+</script>
+</body>
+</html>
